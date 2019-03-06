@@ -3,7 +3,6 @@
 import os
 import sys
 import gi
-import pprint
 import mimetypes
 gi.require_version('Notify', '0.7')
 from gi.repository import Notify
@@ -85,7 +84,7 @@ def config_vs_options(args_server,args_username,args_password):
             elif occurences == 0:
                 # if this username does not appear in the config file require server and password
                 if args_password is None or args_server is None:
-                    print("we cant find any occurence of username {args_username} in the config file,\n" +
+                    print("we cant find any occurence of username {0} in the config file,\n".format(args_username) +
                           "in this case you have to pass the password and server through the command line options", file=sys.stderr)
                     exit(1)
                 else:
