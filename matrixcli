@@ -4,8 +4,6 @@ import os
 import sys
 import gi
 import mimetypes
-gi.require_version('Notify', '0.7')
-from gi.repository import Notify
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixHttpApi
 from matrix_client.user import User
@@ -112,7 +110,7 @@ def config_vs_options(args_server,args_username,args_password):
                 exit(1)
 
         return server, username, password
-    except (ModuleNotFoundError, AttributeError):
+    except (ImportError, AttributeError):
         # if there is no configuration file require the three command line
         # arguments to be not None 
 
@@ -197,6 +195,9 @@ def print_rooms():
     return enum_rooms
 
 def listen():
+    gi.require_version('Notify', '0.7')
+    from gi.repository import Notify
+
     client.add_listener(listen_callback)
     client.listen_forever()
 
