@@ -121,7 +121,7 @@ def config_vs_options(args_server,args_username,args_password):
             return args_server, args_username, args_password
         else :
             print("there is no config.py found in " + config_path +
-                  " or it does not has acounts list, \n" +
+                  " or it doesn't have acounts list, \n" +
                   "so you have to specify the --server, --username and --password", file=sys.stderr)
             exit(1)
 
