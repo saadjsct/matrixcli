@@ -11,7 +11,8 @@ from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixHttpApi
 from matrix_client.user import User
 
-sys.path.append(os.getenv('HOME')+'/.config/matrixcli/')
+config_path = os.getenv('HOME')+'/.config/matrixcli/'
+sys.path.append(config_path)
 
 def get_parser():
     from argparse import ArgumentParser
@@ -57,15 +58,23 @@ def get_parser():
 
     return parser
 
-def so_what_we_do_now(args_server,args_username,args_password):
+def config_vs_options(args_server,args_username,args_password):
+
+    """ responsible of the logic of deciding how to choose the right
+        server, username, password from the spicified options and the
+        configuration file by trying to figure out what the user probably mean
+    """
+
     try :
         # if there is a configuration file
+        # the default is to use the first account 
         import config
         server = config.accounts[0]["server"]
         username = config.accounts[0]["username"]
         password = config.accounts[0]["passeval"]()
 
         if args_username is not None:
+            # if username specified use it
             username = args_username
 
             indexes = [ index for index, account in enumerate(config.accounts) if account['username']==args_username]
@@ -74,23 +83,29 @@ def so_what_we_do_now(args_server,args_username,args_password):
                 server = config.accounts[indexes[0]]['server']
                 password = config.accounts[indexes[0]]['passeval']()
             elif occurences == 0:
+                # if this username does not appear in the config file require server and password
                 if args_password is None or args_server is None:
-                    print("we cant find any occurence of username {args_username} in the config file,\nin this case you have to pass the password and server through the command line options", file=sys.stderr)
+                    print("we cant find any occurence of username {args_username} in the config file,\n" +
+                          "in this case you have to pass the password and server through the command line options", file=sys.stderr)
                     exit(1)
                 else:
                     password = args_password
                     server = args_server
             else:
+                # occurences are more than one 
                 if args_server is None:
+                    # if the user didn't specify the server choose the first account
                     server = config.accounts[indexes[0]]["server"]
                     password = config.accounts[indexes[0]]["passeval"]()
-                for index in indexes:
-                    if config.accounts[index]["server"] == args_server:
-                        server = args_server
-                        password = config.accounts[index]["passeval"]()
-                        break
+                else:
+                    for index in indexes:
+                        if config.accounts[index]["server"] == args_server:
+                            server = args_server
+                            password = config.accounts[index]["passeval"]()
+                            break
 
             if args_password is not None:
+                # if the user specified a password use it and neglect any configuration password
                 password = args_password
         else:
             if args_password is not None or args_server is not None:
@@ -98,10 +113,33 @@ def so_what_we_do_now(args_server,args_username,args_password):
                 exit(1)
 
         return server, username, password
-    except ModuleNotFoundError:
-        return args_server, args_username, args_password
+    except (ModuleNotFoundError, AttributeError):
+        # if there is no configuration file require the three command line
+        # arguments to be not None 
+
+        if all([args_server, args_password, args_username]):
+            return args_server, args_username, args_password
+        else :
+            print("there is no config.py found in " + config_path +
+                  " or it does not has acounts list, \n" +
+                  "so you have to specify the --server, --username and --password", file=sys.stderr)
+            exit(1)
 
 def str_event(event, show_room=True, new_line=True):
+
+    ''' responsible for the str representation of the events.
+
+    arguments:
+        event -- dictionary containing the api event response
+        show_room -- decides if the returned string should contain the room name
+                    but if the room has only two members the function does not
+                    return the room name regardles of this value. (default True)
+
+        newline -- whether or not to print a newline after the sender name
+                useful in case of notifications. (default True)
+
+    '''
+
     if event['type'] == "m.room.member":
         if event['membership'] == "join":
             return "{0} joined".format(event['content']['displayname'])
@@ -139,6 +177,7 @@ def on_message(room, event):
     print(str_event(event, show_room=False, new_line=False))
 
 def choose_room():
+    # prompts the user to choose a room from his joined rooms and returns the room_id
     if args.room_id is not None:
         try:
             room = client.rooms[args.room_id]
@@ -174,6 +213,7 @@ def send():
 
         mime_func = { "image": room.send_image, "audio": room.send_audio,
                       "video": room.send_video, "text": room.send_file}
+        # os.path.dirname takes the part before the slash in the mime type
         mime_func[os.path.dirname(mimetype)](mxc_url, filename)
     elif not args.file:
         room.send_text(args.content)
@@ -195,10 +235,10 @@ def tail():
             msg = input()
             room.send_text(msg)
 
-#---------main----------
+#--------------------------------------------
 
 args = get_parser().parse_args()
-server, username, password = so_what_we_do_now(args.server, args.username, args.password)
+server, username, password = config_vs_options(args.server, args.username, args.password)
 
 client = MatrixClient(server)
 token = client.login(username,password)
@@ -211,4 +251,3 @@ subcommand = { "listen": listen,
                None: print_rooms}
 
 subcommand[args.subcommand]()
-
