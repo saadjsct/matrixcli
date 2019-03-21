@@ -8,6 +8,12 @@ from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixHttpApi
 from matrix_client.user import User
 
+try:
+    gi.require_version('Notify', '0.7')
+    from gi.repository import Notify
+except:
+    pass
+
 config_path = os.getenv('HOME')+'/.config/matrixcli/'
 sys.path.append(config_path)
 
@@ -56,15 +62,13 @@ def get_parser():
     return parser
 
 def config_vs_options(args_server,args_username,args_password):
-
     """ responsible of the logic of deciding how to choose the right
-        server, username, password from the spicified options and the
-        configuration file by trying to figure out what the user probably mean
+server, username and password from the specified options and the
+configuration file by trying to figure out what the user probably mean
     """
-
     try :
         # if there is a configuration file
-        # the default is to use the first account 
+        # the default is to use the first account
         import config
         server = config.accounts[0]["server"]
         username = config.accounts[0]["username"]
@@ -110,16 +114,17 @@ def config_vs_options(args_server,args_username,args_password):
                 exit(1)
 
         return server, username, password
-    except (ImportError, AttributeError):
+    except (ImportError, AttributeError) as err:
         # if there is no configuration file require the three command line
-        # arguments to be not None 
+        # arguments to be not None
 
         if all([args_server, args_password, args_username]):
             return args_server, args_username, args_password
         else :
             print("there is no config.py found in " + config_path +
                   " or it doesn't have acounts list, \n" +
-                  "so you have to specify the --server, --username and --password", file=sys.stderr)
+                  "so you have to specify the --server, --username and --password \n" +
+                  "error raised:\n{0}".format(err), file=sys.stderr)
             exit(1)
 
 def str_event(event, show_room=True, new_line=True):
@@ -137,10 +142,7 @@ def str_event(event, show_room=True, new_line=True):
 
     '''
 
-    if event['type'] == "m.room.member":
-        if event['membership'] == "join":
-            return "{0} joined".format(event['content']['displayname'])
-    elif event['type'] == "m.room.message":
+    if event['type'] == "m.room.message":
         room = client.rooms[event['room_id']]
         sender_name = client.get_user(event["sender"]).get_display_name()
 
@@ -155,26 +157,33 @@ def str_event(event, show_room=True, new_line=True):
             download_url = api.get_download_url(event['content']['url'])
             return "{0} {1}:{2} download {3} from {4} ".format(sender_name, room_name, _new_line, event['content']['body'], download_url)
     else:
-        return event['type']
+        #TODO i should handle a decent amount of event types
+        return "\n{{ " + event['type'] +  " event }}\n"
+
+def maybe_notify(event_string):
+    """if the system is running headless or any problem happened with system notifications don't complain """
+    try:
+        Notify.init("matrix")
+        Notify.Notification.new(event_string).show()
+        Notify.uninit()
+    except:
+        pass
+
 
 def listen_callback(event):
     if event["sender"] != client.user_id:
-        Notify.init("matrix")
         event_string = str_event(event)
-        Notify.Notification.new(event_string).show()
-        Notify.uninit()
+        maybe_notify(event_string)
     print(event_string)
 
 def on_message(room, event):
     if event["sender"] != client.user_id:
-        Notify.init("matrix")
         event_string = str_event(event)
-        Notify.Notification.new(event_string).show()
-        Notify.uninit()
+        maybe_notify(event_string)
     print(str_event(event, show_room=False, new_line=False))
 
 def choose_room():
-    # prompts the user to choose a room from his joined rooms and returns the room_id
+    """ prompts the user to choose a room from his joined rooms and returns the room_id """
     if args.room_id is not None:
         try:
             room = client.rooms[args.room_id]
@@ -195,9 +204,6 @@ def print_rooms():
     return enum_rooms
 
 def listen():
-    gi.require_version('Notify', '0.7')
-    from gi.repository import Notify
-
     client.add_listener(listen_callback)
     client.listen_forever()
 
