@@ -50,7 +50,7 @@ def get_parser():
     parser_tail = subparsers.add_parser('tail',
                                         help='print last messages')
     parser_tail.add_argument("-r", "--room-id", dest="room_id",
-                             help='spicify the room id')
+                             help='specify the room id')
 
     parser_tail.add_argument("-f", "--follow", dest="follow",
                              action="store_true",
