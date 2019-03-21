@@ -56,7 +56,7 @@ def get_parser():
                              action="store_true",
                             help="wait for messages and print them as they come")
     parser_tail.add_argument("-n", "--messages", dest="messages_number", default=10,
-                            type=int, choices=range(1, 100),
+                             type=int, choices=range(1, 100), metavar="[1-100]",
                              help='print the last specified messages')
 
     return parser
