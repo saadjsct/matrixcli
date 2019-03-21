@@ -1,0 +1,227 @@
+#+TITLE: matrixcli a minimal command line matrix client
+#+AUTHOR: saadnpq
+
+matrixcli is a simple [[https://matrix.org/blog/home/][matrix]] client based on the [[https://github.com/matrix-org/matrix-python-sdk][matrix-python-sdk]]
+
+* installation
+Install using setup.py in root project directory. 
+This will also install all needed dependencies.
+#+BEGIN_SRC shell
+git clone https://git.saadnpq.com/saad/matrixcli
+cd ./matrixcli 
+sudo ./setup.py install 
+#+END_SRC
+this will put the matrixcli script in your path and install a 
+template config.py file in $HOME/.config/matrixcli
+
+if you want to test the program without installing it you 
+can install the [[*dependencies][dependencies]] and just run ./matrixcli in the cloned repository
+
+* dependencies 
+the only required dependency is the matrix-python-sdk and is installed automatically 
+if you used the install method mentioned above 
+to install it manually run the following 
+#+begin_src shell
+sudo pip3 install matrix_client
+#+end_src
+
+* configuration
+the account configuration is done through the config.py file in $HOME/.config/matrixcli
+or through the command line options 
+
+this is a one account sample configuration
+#+begin_src python 
+def password_eval():
+    return "putY0UrPredIctabLePA$$w0ordHERE"
+
+accounts=[ { "server":"https://matrix.org/",
+              "username":"putYourUserNameHere",
+              "passeval":password_eval },] 
+# the password_eval function can be named any thing as long as the it matches the function definition 
+#+end_src 
+
+the configuration file should have a list of dictionaries called accounts
+where every dictionary consists of the account information server, username
+and password eval 
+
+the rationale behind defining a function that returns the password value
+is that if you don't want to write your password in plain text you can 
+write any python code you with that generates or reads the password from 
+an encrypted file or a key ring
+
+if you don't want to make a configuration file, you can pass the server, username
+and password through the command line options see [[*usage][usage]]
+
+** multi account configuration 
+
+suppose you have the following configuration file
+#+begin_src python 
+def account1_password_eval():
+    return "account1secretpassword"
+
+def account2_matrixorg_password_eval():
+    return "account2secretpassword"
+
+def account3_password_eval_any_name():
+    return "yXkdsjhslkjhdlksjhffffffkkssskjsdhkljhssdc"
+
+accounts=[
+
+        { "server":"https://example.com",
+          "username":"account1",
+          "passeval":account1_password_eval },
+
+        { "server":"https://matrix.org",
+          "username":"account2",
+          "passeval":account2_matrixorg_password_eval},
+
+        { "server":"https://example.com",
+          "username":"account3",
+          "passeval":account3_password_eval_any_name },]
+#+end_src 
+
+if you didn't specify and command line option the program will use the first
+account in the accounts list. to use any other account its enough to 
+pass the -u or --username option to command with the username of that account 
+for example 
+#+begin_src shell
+matrixcli -u account3 getrooms
+#+end_src
+that command will login with the parameters of the third account 
+
+if you have two or more account with the same username but with different server
+you have to specify the --username and --server options to the command 
+
+* usage
+for a list of the sub commands and options run 
+
+#+begin_src shell
+matrixcli --help 
+#+end_src
+
+#+begin_example
+usage: matrixcli [-h] [-s SERVER] [-u USERNAME] [-p PASSWORD]
+                 {send,listen,rooms,tail} ...
+
+command line matrix client
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s SERVER, --server SERVER
+                        server to login to
+  -u USERNAME, --username USERNAME
+                        username to login with
+  -p PASSWORD, --password PASSWORD
+                        the password
+
+subcommands:
+  {send,listen,rooms,tail}
+    send                send something to a room
+    listen              listen forever for events
+    rooms               get all joined rooms
+    tail                print last messages
+#+end_example
+
+to list the options of a specific sub command (e.g. send)
+
+#+begin_src shell
+matrixcli send --help 
+#+end_src
+
+** rooms 
+every sub command that supposed to act on a specific room accepts the 
+-r or --room-id optional argument which takes the room-id to act upon 
+to get the your joined rooms id run 
+#+begin_src 
+matrixcli rooms
+#+end_src
+outputs for my account 
+#+begin_example 
+0 : moatazomar : !LsBUkYVYJignwCpACn:saadnpq.com
+1 : mahmoudhafez : !fCXcmULzIohNQomvXD:saadnpq.com
+2 : momenamr : !ocOmULdomkoJWYzXts:matrix.org
+3 : elm3alem zaki : !OaBjEnLTTVqGpqrPES:matrix.org
+4 : true sharing : !OSPeUVrwMKbIrLQuBX:matrix.org
+#+end_example
+
+
+if you didn't specify the room through the command line the program will prompt you 
+with your joined rooms when it needs to  
+
+#+begin_src shell
+matrixcli tail -f 
+#+end_src
+
+#+begin_example
+0 : moatazomar : !LsBUkYVYJignwCpACn:saadnpq.com
+1 : mahmoudhafez : !fCXcmULzIohNQomvXD:saadnpq.com
+2 : momenamr : !ocOmULdomkoJWYzXts:matrix.org
+3 : elm3alem zaki : !OaBjEnLTTVqGpqrPES:matrix.org
+4 : true sharing : !OSPeUVrwMKbIrLQuBX:matrix.org
+
+enter room number : 
+#+end_example
+
+** listen
+#+begin_src shell
+matrixcli listen
+#+end_src
+listens forever for events and outputs incoming messages to both stdout
+and os notifications if you are running this command on a headless system
+or the program failed to send notifications it will output events only to
+stdout without complaining.
+
+press C-c to stop 
+
+** tail 
+returns the last n messages for ROOM_ID
+
+#+begin_src shell
+matrixcli tail -h
+#+end_src
+
+#+begin_example 
+usage: matrixcli tail [-h] [-r ROOM_ID] [-f] [-n [1-100]]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -r ROOM_ID, --room-id ROOM_ID
+                        spicify the room id
+  -f, --follow          wait for messages and print them as they come
+  -n [1-100], --messages [1-100]
+                        print the last specified messages
+#+end_example
+
+the option -f prints the last messages but wait for new messages
+and print them as they come.
+
+while in follow mode the program also captures stdin, so you can type
+the message you want and press enter to send it
+
+** send
+#+begin_src shell
+matrixcli send --help 
+#+end_src
+#+begin_example
+usage: matrixcli send [-h] [-r ROOM_ID] [-t | -f] content
+
+positional arguments:
+  content
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -r ROOM_ID, --room-id ROOM_ID
+                        specify the room id
+  -t, --text            force the program to treat the content as text message
+  -f, --file            force the program to treat the content as a file
+#+end_example
+
+the send commands takes the content you want to send as a positional arguments, the program first
+sees if the passed text represent a file that exists in the filesystem, if so it will try to 
+guess its MIME type based on the extension to correctly preview the content on the receiver's client. 
+if the passed text does not represent any file on the filesystem the program will treat it as a text message
+
+to force the program to treat the content as a file or a text you can specify the optional arguments --text or --file  
+
+* Source code
+The source code is distributed under GNU General Public License v3. See LICENSE.
