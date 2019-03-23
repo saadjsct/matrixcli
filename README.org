@@ -1,5 +1,9 @@
 #+TITLE: matrixcli a minimal command line matrix client
 #+AUTHOR: saadnpq
+#+HUGO_BASE_DIR: ~/blog/ 
+#+hugo_auto_set_lastmod: t
+#+EXPORT_FILE_NAME: matrixcli
+#+hugo_tags: projects
 
 matrixcli is a simple [[https://matrix.org/blog/home/][matrix]] client based on the [[https://github.com/matrix-org/matrix-python-sdk][matrix-python-sdk]]
 
@@ -213,3 +217,7 @@ to force the program to treat the content as a file or a text you can specify th
 
 * Source code
 The source code is distributed under GNU General Public License v3. See LICENSE.
+
+# Local Variables:
+# eval: (org-hugo-auto-export-mode)
+# End:
