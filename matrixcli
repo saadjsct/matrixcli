@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-
 import os
 import sys
 import gi
 import mimetypes
+import importlib.util
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixHttpApi
 from matrix_client.user import User
@@ -14,8 +14,6 @@ try:
 except:
     pass
 
-config_path = os.getenv('HOME')+'/.config/matrixcli/'
-sys.path.append(config_path)
 
 def get_parser():
     from argparse import ArgumentParser
@@ -31,6 +29,9 @@ def get_parser():
 
     parser.add_argument("-p", "--password", dest="password",
                         help="the password")
+
+    parser.add_argument("-c", "--config", dest="config",
+                        help="custom configuration file")
 
     parser_send = subparsers.add_parser('send', help='send something to a room')
     parser_send.add_argument("-r", "--room-id", dest="room_id", help='spicify the room id')
@@ -61,7 +62,33 @@ def get_parser():
 
     return parser
 
-def config_vs_options(args_server,args_username,args_password):
+def load_config():
+    home = os.getenv('HOME')
+    if args.config is None:
+        if os.path.exists(home + '/.config/matrixcli/config.py'):
+            config_path = home + '/.config/matrixcli/config.py'
+        else:
+            config_path = '/etc/matrixcli/config.py'
+    else:
+        if os.path.exists(args.config):
+            if args.config.endswith('.py'):
+                config_path = args.config
+            else:
+                print("config file must be python file ends with .py", file=sys.stderr)
+                exit(233)
+        else:
+            print("the specified config file does not exist", file=sys.stderr)
+            exit(233)
+
+    try:
+        spec = importlib.util.spec_from_file_location("config.py", config_path)
+        config = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(config)
+    except FileNotFoundError:
+        print("WARNING: config file does not exist")
+    return config, config_path
+
+def config_vs_options():
     """ responsible of the logic of deciding how to choose the right
 server, username and password from the specified options and the
 configuration file by trying to figure out what the user probably mean
@@ -69,32 +96,32 @@ configuration file by trying to figure out what the user probably mean
     try :
         # if there is a configuration file
         # the default is to use the first account
-        import config
+
         server = config.accounts[0]["server"]
         username = config.accounts[0]["username"]
         password = config.accounts[0]["passeval"]()
 
-        if args_username is not None:
+        if args.username is not None:
             # if username specified use it
-            username = args_username
+            username = args.username
 
-            indexes = [ index for index, account in enumerate(config.accounts) if account['username']==args_username]
+            indexes = [ index for index, account in enumerate(config.accounts) if account['username']==args.username]
             occurences = len(indexes)
             if occurences == 1:
                 server = config.accounts[indexes[0]]['server']
                 password = config.accounts[indexes[0]]['passeval']()
             elif occurences == 0:
                 # if this username does not appear in the config file require server and password
-                if args_password is None or args_server is None:
-                    print("we cant find any occurence of username {0} in the config file,\n".format(args_username) +
+                if args.password is None or args.server is None:
+                    print("we cant find any occurence of username {0} in the config file,\n".format(args.username) +
                           "in this case you have to pass the password and server through the command line options", file=sys.stderr)
                     exit(1)
                 else:
-                    password = args_password
-                    server = args_server
+                    password = args.password
+                    server = args.server
             else:
                 # occurences are more than one 
-                if args_server is None:
+                if args.server is None:
                     # if the user didn't specify the server choose the first account
                     server = config.accounts[indexes[0]]["server"]
                     password = config.accounts[indexes[0]]["passeval"]()
@@ -109,28 +136,24 @@ configuration file by trying to figure out what the user probably mean
                 # if the user specified a password use it and neglect any configuration password
                 password = args_password
         else:
-            if args_password is not None or args_server is not None:
+            if args.password is not None or args.server is not None:
                 print("you can't specify password or server without username", file=sys.stderr)
                 exit(1)
 
         return server, username, password
-    except (ImportError, AttributeError) as err:
+    except AttributeError as err:
         # if there is no configuration file require the three command line
         # arguments to be not None
 
-        if all([args_server, args_password, args_username]):
+        if all([args.server, args.password, args.username]):
             return args_server, args_username, args_password
         else :
-            print("there is no config.py found in " + config_path +
-                  " or it doesn't have acounts list, \n" +
-                  "so you have to specify the --server, --username and --password \n" +
-                  "error raised:\n{0}".format(err), file=sys.stderr)
+            print("config file with accounts list does not exist, you have to specify the --server, --username and --password \n" +
+                  "error raised: {0}".format(err), file=sys.stderr)
             exit(1)
 
 def str_event(event, show_room=True, new_line=True):
-
     ''' responsible for the str representation of the events.
-
     arguments:
         event -- dictionary containing the api event response
         show_room -- decides if the returned string should contain the room name
@@ -139,7 +162,6 @@ def str_event(event, show_room=True, new_line=True):
 
         newline -- whether or not to print a newline after the sender name
                 useful in case of notifications. (default True)
-
     '''
 
     if event['type'] == "m.room.message":
@@ -153,7 +175,7 @@ def str_event(event, show_room=True, new_line=True):
         _new_line = "\n" if new_line else " "
         if event['content']['msgtype'] == "m.text":
             return "{0} {1}:{2}{3}".format(sender_name, room_name, _new_line, event['content']['body'])
-        else:
+        else :
             download_url = api.get_download_url(event['content']['url'])
             return "{0} {1}:{2} download {3} from {4} ".format(sender_name, room_name, _new_line, event['content']['body'], download_url)
     else:
@@ -244,7 +266,8 @@ def tail():
 #--------------------------------------------
 
 args = get_parser().parse_args()
-server, username, password = config_vs_options(args.server, args.username, args.password)
+config, config_path = load_config()
+server, username, password = config_vs_options()
 
 client = MatrixClient(server)
 token = client.login(username,password)
