@@ -48,6 +48,11 @@ def get_parser():
     parser_rooms = subparsers.add_parser('rooms',
                                          help='get all joined rooms')
 
+    parser_unread = subparsers.add_parser('unread',
+                                         help='get unread notifications')
+    parser_unread.add_argument("-r", "--room-id", dest="room_id",
+                                help='specify the room id')
+
     parser_tail = subparsers.add_parser('tail',
                                         help='print last messages')
     parser_tail.add_argument("-r", "--room-id", dest="room_id",
@@ -263,6 +268,23 @@ def tail():
             msg = input()
             room.send_text(msg)
 
+def unread():
+    response = api.sync()
+    if args.room_id is None:
+        sum = 0
+        for room_id, v in client.rooms.items():
+            try:
+                sum += response['rooms']['join'][room_id]['unread_notifications']['notification_count']
+            except KeyError:
+                sum += 0
+        print(sum)
+    else:
+        try:
+            print(response['rooms']['join'][args.room_id]['unread_notifications']['notification_count'])
+        except KeyError:
+            print("problems fetching unread notifications, maybe wrong room id?")
+            exit(23)
+
 #--------------------------------------------
 
 args = get_parser().parse_args()
@@ -277,6 +299,7 @@ subcommand = { "listen": listen,
                "rooms": print_rooms,
                "send": send,
                "tail": tail,
+               "unread": unread,
                None: print_rooms}
 
 subcommand[args.subcommand]()
