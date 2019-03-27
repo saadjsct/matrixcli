@@ -80,10 +80,10 @@ def load_config():
                 config_path = args.config
             else:
                 print("config file must be python file ends with .py", file=sys.stderr)
-                exit(233)
+                exit(1)
         else:
             print("the specified config file does not exist", file=sys.stderr)
-            exit(233)
+            exit(1)
 
     try:
         spec = importlib.util.spec_from_file_location("config.py", config_path)
@@ -283,7 +283,7 @@ def unread():
             print(response['rooms']['join'][args.room_id]['unread_notifications']['notification_count'])
         except KeyError:
             print("problems fetching unread notifications, maybe wrong room id?")
-            exit(23)
+            exit(1)
 
 #--------------------------------------------
 
