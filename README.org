@@ -5,7 +5,8 @@
 #+EXPORT_FILE_NAME: matrixcli
 #+hugo_tags: projects
 
-matrixcli is a simple [[https://matrix.org/blog/home/][matrix]] client based on the [[https://github.com/matrix-org/matrix-python-sdk][matrix-python-sdk]]
+matrixcli is a simple [[https://matrix.org/blog/home/][matrix]] client based on the [[https://github.com/matrix-org/matrix-python-sdk][matrix-python-sdk]].
+if you wonder how this is useful please see [[* applications][applications]]
 
 * installation
 you can install matrixcli using setup.py in root project directory. 
@@ -17,6 +18,11 @@ sudo ./setup.py install
 #+END_SRC
 this will put the matrixcli script in your path, install a 
 template config.py file in /etc/matrixcli and systemd unit file in /lib/systemd/user
+
+to enable the systemd service you can run the following.
+#+begin_src shell
+systemctl --user enable --now matrixcli
+#+end_src
 
 if you want to test the program without installing it you 
 can install the [[*dependencies][dependencies]] manually and just run ./matrixcli in the cloned repository
@@ -233,6 +239,33 @@ guess its MIME type based on the extension to correctly preview the content on t
 if the passed text does not represent any file on the filesystem the program will treat it as a text message.
 
 to force the program to treat the content as a file or a text you can specify the optional arguments --file or --text.  
+
+* applications 
+** desktop notifications
+the first motive to make this program was that i didn't want to keep 
+riot webpage open or to run an electron app just for notifications.
+
+you can enable the systemd service, to get notifications for events as they come.
+#+begin_src shell 
+systemctl --user enable --now matrixcli
+#+end_src
+
+[[file:screenshots/notifications.png]]
+
+** status bars
+using =matrixcli unread= you write a module for any status bar
+to display unread messages. here is a simple example for polybar
+
+#+begin_src yaml
+[module/matrix]
+type = custom/script
+exec = matrixcli unread 
+format = <label>
+label = M[%output%]
+interval = 300 
+#+end_src 
+
+[[file:screenshots/polybar.jpg]]
 
 * Source code
 The source code is distributed under GNU General Public License v3. See LICENSE.
