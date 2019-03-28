@@ -4,6 +4,8 @@ import sys
 import gi
 import mimetypes
 import importlib.util
+import urllib.request
+import tempfile
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixHttpApi
 from matrix_client.user import User
@@ -147,9 +149,9 @@ configuration file by trying to figure out what the user probably mean
                             password = config.accounts[index]["passeval"]()
                             break
 
-            if args_password is not None:
+            if args.password is not None:
                 # if the user specified a password use it and neglect any configuration password
-                password = args_password
+                password = args.password
         else:
             if args.password is not None or args.server is not None:
                 print("you can't specify password or server without username", file=sys.stderr)
@@ -174,41 +176,42 @@ def get_room_id():
         return api.get_room_id(args.room_alias)
     else : return None
 
-def str_event(event, show_room=True, new_line=True):
+def str_event(event):
     ''' responsible for the str representation of the events.
     arguments:
         event -- dictionary containing the api event response
-        show_room -- decides if the returned string should contain the room name
-                    but if the room has only two members the function does not
-                    return the room name regardles of this value. (default True)
-
-        newline -- whether or not to print a newline after the sender name
-                useful in case of notifications. (default True)
+    returns a tuple of:
+        room_name (empty string if its a direct chat)
+        sender_name -- sender name
+        content -- content representation
     '''
+    room = client.rooms[event['room_id']]
+    if len(room.get_joined_members()) > 2 and show_room:
+        room_name = "(" + room.display_name + ") "
+    else:
+        room_name = ""
+
+    sender_name = client.get_user(event["sender"]).get_display_name()
+    avatar_url = client.get_user(event["sender"]).get_avatar_url()
 
     if event['type'] == "m.room.message":
-        room = client.rooms[event['room_id']]
-        sender_name = client.get_user(event["sender"]).get_display_name()
-
-        if len(room.get_joined_members()) > 2 and show_room:
-            room_name = "(" + room.display_name + ") "
-        else:
-            room_name = ""
-        _new_line = "\n" if new_line else " "
         if event['content']['msgtype'] == "m.text":
-            return "{0} {1}:{2}{3}".format(sender_name, room_name, _new_line, event['content']['body'])
+            content = event['content']['body']
         else :
             download_url = api.get_download_url(event['content']['url'])
-            return "{0} {1}:{2} download {3} from {4} ".format(sender_name, room_name, _new_line, event['content']['body'], download_url)
+            content = download_url
     else:
-        #TODO i should handle a decent amount of event types
-        return "\n{{ " + event['type'] +  " event }}\n"
+        content =  "\n{{ " + event['type'] +  " event }}\n"
 
-def maybe_notify(event_string):
+    return room_name, sender_name, avatar_url, content
+
+def maybe_notify(title, content,avatar_url):
     """if the system is running headless or any problem happened with system notifications don't complain """
     try:
+        bullshit, avatar_file = tempfile.mkstemp()
+        urllib.request.urlretrieve(avatar_url, avatar_file)
         Notify.init("matrix")
-        Notify.Notification.new(event_string).show()
+        Notify.Notification.new(title, content, avatar_file).show()
         Notify.uninit()
     except:
         pass
@@ -216,15 +219,15 @@ def maybe_notify(event_string):
 
 def listen_callback(event):
     if event["sender"] != client.user_id:
-        event_string = str_event(event)
-        maybe_notify(event_string)
-    print(event_string)
+        room_name, sender_name, avatar_url, content = str_event(event)
+        maybe_notify(sender_name, content, avatar_url)
+    print((sender_name if room_name == "" else sender_name + " in " + room_name) + ":" , content)
 
 def on_message(room, event):
     if event["sender"] != client.user_id:
-        event_string = str_event(event)
-        maybe_notify(event_string)
-    print(str_event(event, show_room=False, new_line=False))
+        room_name, sender_name, avatar_url, content = str_event(event)
+        maybe_notify(sender_name, content, avatar_url)
+    print(sender_name + ":", content)
 
 def choose_room():
     """ prompts the user to choose a room from his joined rooms and returns the room_id """
@@ -277,7 +280,8 @@ def tail():
     if args.messages_number > 10 :
         room.backfill_previous_messages(limit=args.messages_number-10)
     for event in room.events[-1*args.messages_number:]:
-        print(str_event(event, new_line=False))
+        room_name, sender_name, avatar_url, content = str_event(event)
+        print(sender_name + ":", content)
     if args.follow :
         room.add_listener(on_message)
         client.start_listener_thread()
