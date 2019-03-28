@@ -2,4 +2,4 @@ __pycache__/
 build/
 dist
 matrixcli.egg-info
-.#config.py
+.#*
