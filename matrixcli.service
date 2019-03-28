@@ -1,0 +1,12 @@
+[Unit]
+Description=matrix listener
+After=network.target
+
+[Service]
+Restart=always
+RestartSec=3
+ExecStart=/usr/bin/matrixcli listen
+
+[Install]
+WantedBy=default.target
+

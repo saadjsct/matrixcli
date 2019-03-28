@@ -16,7 +16,7 @@ cd ./matrixcli
 sudo ./setup.py install 
 #+END_SRC
 this will put the matrixcli script in your path and install a 
-template config.py file in $HOME/.config/matrixcli
+template config.py file in /etc/matrixcli and systemd unit file in /lib/systemd/user
 
 if you want to test the program without installing it you 
 can install the [[*dependencies][dependencies]] manually and just run ./matrixcli in the cloned repository
