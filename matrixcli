@@ -34,7 +34,11 @@ def get_parser():
                         help="custom configuration file")
 
     parser_send = subparsers.add_parser('send', help='send something to a room')
-    parser_send.add_argument("-r", "--room-id", dest="room_id", help='spicify the room id')
+    group = parser_send.add_mutually_exclusive_group()
+    group.add_argument("-r", "--room-id", dest="room_id",
+                                help='specify the room id')
+    group.add_argument("-a", "--room-alias", dest="room_alias",
+                                help='specify the room by room alias')
     group = parser_send.add_mutually_exclusive_group()
     group.add_argument("-t", "--text", dest="text", action="store_true",
                             help="force the program to treat the content as text message")
@@ -50,13 +54,19 @@ def get_parser():
 
     parser_unread = subparsers.add_parser('unread',
                                          help='get unread notifications')
-    parser_unread.add_argument("-r", "--room-id", dest="room_id",
+    group = parser_unread.add_mutually_exclusive_group()
+    group.add_argument("-r", "--room-id", dest="room_id",
                                 help='specify the room id')
+    group.add_argument("-a", "--room-alias", dest="room_alias",
+                                help='specify the room by room alias')
 
     parser_tail = subparsers.add_parser('tail',
                                         help='print last messages')
-    parser_tail.add_argument("-r", "--room-id", dest="room_id",
-                             help='specify the room id')
+    group = parser_tail.add_mutually_exclusive_group()
+    group.add_argument("-r", "--room-id", dest="room_id",
+                                help='specify the room id')
+    group.add_argument("-a", "--room-alias", dest="room_alias",
+                                help='specify the room by room alias')
 
     parser_tail.add_argument("-f", "--follow", dest="follow",
                              action="store_true",
@@ -125,7 +135,7 @@ configuration file by trying to figure out what the user probably mean
                     password = args.password
                     server = args.server
             else:
-                # occurences are more than one 
+                # occurences are more than one
                 if args.server is None:
                     # if the user didn't specify the server choose the first account
                     server = config.accounts[indexes[0]]["server"]
@@ -156,6 +166,13 @@ configuration file by trying to figure out what the user probably mean
             print("config file with accounts list does not exist, you have to specify the --server, --username and --password \n" +
                   "error raised: {0}".format(err), file=sys.stderr)
             exit(1)
+
+def get_room_id():
+    if args.room_id is not None:
+        return args.room_id
+    elif args.room_alias is not None:
+        return api.get_room_id(args.room_alias)
+    else : return None
 
 def str_event(event, show_room=True, new_line=True):
     ''' responsible for the str representation of the events.
@@ -211,9 +228,10 @@ def on_message(room, event):
 
 def choose_room():
     """ prompts the user to choose a room from his joined rooms and returns the room_id """
-    if args.room_id is not None:
+    room_id = get_room_id()
+    if room_id is not None:
         try:
-            room = client.rooms[args.room_id]
+            room = client.rooms[room_id]
             return room
         except KeyError:
             print("this room does not exist or you are not joined\n", file=sys.stderr)
@@ -270,7 +288,8 @@ def tail():
 
 def unread():
     response = api.sync()
-    if args.room_id is None:
+    room_id = get_room_id()
+    if room_id is None:
         sum = 0
         for room_id, v in client.rooms.items():
             try:
@@ -280,7 +299,7 @@ def unread():
         print(sum)
     else:
         try:
-            print(response['rooms']['join'][args.room_id]['unread_notifications']['notification_count'])
+            print(response['rooms']['join'][room_id]['unread_notifications']['notification_count'])
         except KeyError:
             print("problems fetching unread notifications, maybe wrong room id?")
             exit(1)
