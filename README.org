@@ -15,7 +15,7 @@ git clone https://git.saadnpq.com/saad/matrixcli
 cd ./matrixcli 
 sudo ./setup.py install 
 #+END_SRC
-this will put the matrixcli script in your path and install a 
+this will put the matrixcli script in your path, install a 
 template config.py file in /etc/matrixcli and systemd unit file in /lib/systemd/user
 
 if you want to test the program without installing it you 
@@ -29,19 +29,24 @@ to install it manually run the following
 sudo pip3 install matrix_client
 #+end_src
 
-* configuration
+* configuration file
 the account configuration is done through the config.py
-file in $HOME/.config/matrixcli or through the command line options.
+file either in one of the following locations sorted by precedence
+
+1) custom file specified using the -c option
+1) $HOME/.config/matrixcli  
+1) /etc/matrixcli  
 
 this is a one account sample configuration.
 #+begin_src python 
 def password_eval():
-    return "putY0UrPredIctabLePA$$w0ordHERE"
+    return "Y0UrPredIctabLePA$$w0ord"
 
-accounts=[ { "server":"https://matrix.org/",
+accounts=[{ "server":"https://matrix.org/",
               "username":"putYourUserNameHere",
-              "passeval":password_eval },] 
-# the password_eval function can be named any thing as long as the it matches the function definition 
+              "passeval":password_eval }] 
+# the password_eval function can be named any thing as long as 
+# it matches the function definition 
 #+end_src 
 
 the configuration file should have an =accounts= variable which holds 
@@ -50,10 +55,10 @@ information server, username and password eval
 
 the rationale behind defining a function that returns the password value
 is that if you don't want to write your password in plain text you can 
-write any python code you with that generates or reads the password from 
+write any python code you wish that generates or reads the password from 
 an encrypted file or a key ring
 
-if you don't want to make a configuration file, you can pass the server, username
+if you don't want to make a configuration file at all, you can pass the server, username
 and password through command line arguments. see [[*usage][usage]]
 
 ** multi account configuration 
@@ -105,8 +110,8 @@ matrixcli --help
 #+end_src
 output:
 #+begin_example
-usage: matrixcli [-h] [-s SERVER] [-u USERNAME] [-p PASSWORD]
-                 {send,listen,rooms,tail} ...
+#usage: matrixcli [-h] [-s SERVER] [-u USERNAME] [-p PASSWORD] [-c CONFIG]
+                 {send,listen,rooms,unread,tail} ...
 
 command line matrix client
 
@@ -118,12 +123,15 @@ optional arguments:
                         username to login with
   -p PASSWORD, --password PASSWORD
                         the password
+  -c CONFIG, --config CONFIG
+                        custom configuration file
 
 subcommands:
-  {send,listen,rooms,tail}
+  {send,listen,rooms,unread,tail}
     send                send something to a room
     listen              listen forever for events
     rooms               get all joined rooms
+    unread              get unread notifications
     tail                print last messages
 #+end_example
 
@@ -135,7 +143,8 @@ matrixcli send --help
 
 ** rooms 
 every sub-command that supposed to act on a specific room accepts the 
--r or --room-id optional argument, which takes the room-id to act upon. 
+-r/--room-id optional argument which takes the room-id to act upon, 
+or -a/--room_alias which takes a room alias.
 
 to get a room-id of a room run: 
 #+begin_src 
@@ -150,8 +159,7 @@ outputs the following (for my account).
 4 : true sharing : !OSPeUVrwMKbIrLQuBX:matrix.org
 #+end_example
 
-
-if you didn't specify the room-id through the command line, the program will prompt you 
+if you didn't specify the room-id or room-alias through the command line, the program will prompt you 
 with your joined rooms when it needs to. 
 
 ** listen
@@ -161,9 +169,16 @@ matrixcli listen
 listens forever for events and outputs incoming messages to both stdout
 and os notifications, if you are running this command on a headless system
 or the program failed to send notifications for some reason,
-it will output events to stdout without complaining.
+it will output events only to stdout without complaining.
 
 you can press C-c to quit the listen mode.
+
+there is also a systemd service installed with the program that uses =matrixcli listen=,
+to enable it you can run the following.
+
+#+begin_src shell
+systemctl --user enable --now matrixcli
+#+end_src 
 
 ** tail 
 returns the last n messages of a room.
@@ -173,12 +188,14 @@ matrixcli tail -h
 #+end_src
 
 #+begin_example 
-usage: matrixcli tail [-h] [-r ROOM_ID] [-f] [-n [1-100]]
+usage: matrixcli tail [-h] [-r ROOM_ID | -a ROOM_ALIAS] [-f] [-n [1-100]]
 
 optional arguments:
   -h, --help            show this help message and exit
   -r ROOM_ID, --room-id ROOM_ID
-                        spicify the room id
+                        specify the room id
+  -a ROOM_ALIAS, --room-alias ROOM_ALIAS
+                        specify the room by room alias
   -f, --follow          wait for messages and print them as they come
   -n [1-100], --messages [1-100]
                         print the last specified messages
@@ -195,7 +212,7 @@ and hit enter to send it.
 matrixcli send --help 
 #+end_src
 #+begin_example
-usage: matrixcli send [-h] [-r ROOM_ID] [-t | -f] content
+usage: matrixcli send [-h] [-r ROOM_ID | -a ROOM_ALIAS] [-t | -f] content
 
 positional arguments:
   content
@@ -204,6 +221,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -r ROOM_ID, --room-id ROOM_ID
                         specify the room id
+  -a ROOM_ALIAS, --room-alias ROOM_ALIAS
+                        specify the room by room alias
   -t, --text            force the program to treat the content as text message
   -f, --file            force the program to treat the content as a file
 #+end_example
