@@ -4,6 +4,8 @@ import sys
 import gi
 import mimetypes
 import importlib.util
+import matrix_client.errors
+from time import sleep
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixHttpApi
 from matrix_client.user import User
@@ -310,9 +312,16 @@ args = get_parser().parse_args()
 config, config_path = load_config()
 server, username, password = config_vs_options()
 
-client = MatrixClient(server)
-token = client.login(username,password)
-api = MatrixHttpApi(server, token)
+while True:
+    # loop until no errors
+    try:
+        client = MatrixClient(server)
+        token = client.login(username,password)
+        api = MatrixHttpApi(server, token)
+        break
+    except matrix_client.errors.MatrixHttpLibError:
+        print('error connecting. retrying after 1 second...', file=sys.stderr)
+        sleep(1)
 
 subcommand = { "listen": listen,
                "rooms": print_rooms,
