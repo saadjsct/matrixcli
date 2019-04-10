@@ -1,5 +1,6 @@
 #+TITLE: matrixcli a minimal command line matrix client
 #+AUTHOR: saadnpq
+#+date: 2019-03-30 
 #+HUGO_BASE_DIR: ~/blog/ 
 #+hugo_auto_set_lastmod: t
 #+EXPORT_FILE_NAME: matrixcli
@@ -241,6 +242,10 @@ if the passed text does not represent any file on the filesystem the program wil
 to force the program to treat the content as a file or a text you can specify the optional arguments --file or --text.  
 
 * applications 
+below are the ways i personally use matrixcli, 
+if you found a different use case which you think will be beneficial for others too,
+please edit this readme, make a pull request and i will accept it.
+
 ** desktop notifications
 the first motive to make this program was that i didn't want to keep 
 riot webpage open or to run an electron app just for notifications.
@@ -266,6 +271,16 @@ interval = 300
 #+end_src 
 
 [[file:screenshots/polybar.jpg]]
+
+** sendmail for matrix 
+for example i have this cron job that sends every day a random song
+from my music directory to a specific room.
+
+#+begin_src shell
+0 0 * * * /usr/local/bin/matrixcli send -r '!OSPeUVrwMKbIrLQuBX:matrix.org' $(tree /home/pi/musiqa -fi | grep ".*.mp3" | shuf | sed 1q)
+#+end_src
+
+and i use it in many scripts on remote servers to notify me about a script output or just when something goes wrong.
 
 * Source code
 The source code is distributed under GNU General Public License v3. See LICENSE.
