@@ -6,11 +6,8 @@ import mimetypes
 import importlib.util
 import urllib.request
 import tempfile
-<<<<<<< HEAD
-=======
 import matrix_client.errors
 from time import sleep
->>>>>>> devel
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixHttpApi
 from matrix_client.user import User
