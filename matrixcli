@@ -4,6 +4,8 @@ import sys
 import gi
 import mimetypes
 import importlib.util
+import urllib.request
+import tempfile
 import matrix_client.errors
 from time import sleep
 from matrix_client.client import MatrixClient
