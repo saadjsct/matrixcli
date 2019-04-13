@@ -25,3 +25,5 @@
 #           "passeval":account3_password_eval_any_name },
 # ]
 
+# ignore_rooms = ["room_id", "another_room_id"]
+

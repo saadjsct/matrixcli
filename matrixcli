@@ -58,6 +58,10 @@ def get_parser():
 
     parser_unread = subparsers.add_parser('unread',
                                          help='get unread notifications')
+    parser_unread.add_argument("-f", "--follow", dest="follow",
+                             action="store_true",
+                            help="don't close connection and print the number of unread messages whenever updated")
+
     group = parser_unread.add_mutually_exclusive_group()
     group.add_argument("-r", "--room-id", dest="room_id",
                                 help='specify the room id')
@@ -103,6 +107,11 @@ def load_config():
         spec = importlib.util.spec_from_file_location("config.py", config_path)
         config = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(config)
+        try:
+            config.ignore_rooms
+        except AttributeError:
+            config.ignore_rooms = []
+
     except FileNotFoundError:
         print("WARNING: config file does not exist")
     return config, config_path
@@ -287,25 +296,39 @@ def tail():
     if args.follow :
         room.add_listener(on_message)
         client.start_listener_thread()
+        client.listen_forever()
 
         while True:
             msg = input()
             room.send_text(msg)
 
-def unread():
+def unread_callback(dump1, dump2=False):
+    unread(oneshot=True)
+
+def unread(oneshot=False):
     response = api.sync()
     room_id = get_room_id()
+
     if room_id is None:
         sum = 0
         for room_id, v in client.rooms.items():
-            try:
-                sum += response['rooms']['join'][room_id]['unread_notifications']['notification_count']
-            except KeyError:
-                sum += 0
+            if room_id not in config.ignore_rooms:
+                try:
+                    sum += response['rooms']['join'][room_id]['unread_notifications']['notification_count']
+                except KeyError:
+                    sum += 0
         print(sum)
+        if args.follow and not oneshot:
+            client.add_listener(unread_callback)
+            client.listen_forever()
     else:
         try:
             print(response['rooms']['join'][room_id]['unread_notifications']['notification_count'])
+            if args.follow and not oneshot:
+                # add a room listener thats calls unread(oneshot=True)
+                room = client.rooms[room_id]
+                room.add_listener(unread_callback)
+                client.listen_forever()
         except KeyError:
             print("problems fetching unread notifications, maybe wrong room id?")
             exit(1)

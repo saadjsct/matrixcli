@@ -52,8 +52,13 @@ def password_eval():
 accounts=[{ "server":"https://matrix.org/",
               "username":"putYourUserNameHere",
               "passeval":password_eval }] 
+
 # the password_eval function can be named any thing as long as 
 # it matches the function definition 
+
+ignore_rooms = ["room_id", "another_room_id"] 
+# note: room_id not room_alias (run matrixcli rooms to get the room_id)
+
 #+end_src 
 
 the configuration file should have an =accounts= variable which holds 
@@ -64,6 +69,9 @@ the rationale behind defining a function that returns the password value
 is that if you don't want to write your password in plain text you can 
 write any python code you wish that generates or reads the password from 
 an encrypted file or a key ring
+
+the ignore_rooms list contains rooms that you want to be ignored when 
+calculating unread messages and in listen mode 
 
 if you don't want to make a configuration file at all, you can pass the server, username
 and password through command line arguments. see [[*usage][usage]]
@@ -94,6 +102,8 @@ accounts=[
         { "server":"https://example.com",
           "username":"account3",
           "passeval":account3_password_eval_any_name },]
+
+ignore_rooms = ["room_id", "another_room_id"] 
 #+end_src 
 
 if you didn't specify any command line option, the program will use the first
@@ -240,6 +250,28 @@ guess its MIME type based on the extension to correctly preview the content on t
 if the passed text does not represent any file on the filesystem the program will treat it as a text message.
 
 to force the program to treat the content as a file or a text you can specify the optional arguments --file or --text.  
+
+** unread
+
+#+begin_src shell
+matrixcli unread --help 
+#+end_src
+
+#+begin_example
+usage: matrixcli unread [-h] [-f] [-r ROOM_ID | -a ROOM_ALIAS]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f, --follow          don't close connection and print the number of unread
+                        messages whenever updated
+  -r ROOM_ID, --room-id ROOM_ID
+                        specify the room id
+  -a ROOM_ALIAS, --room-alias ROOM_ALIAS
+                        specify the room by room alias
+#+end_example
+
+outputs unread messages for room_id or all rooms (except those in ignore_rooms)
+if no room_id or room_alias specified
 
 * applications 
 below are the ways i personally use matrixcli, 
