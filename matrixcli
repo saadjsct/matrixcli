@@ -304,7 +304,11 @@ def tail():
             room.send_text(msg)
 
 def unread_callback(dump1, dump2=False):
+    sleep(1) # a brief delay needed when we send messages
     unread(oneshot=True)
+
+def listen_handler(e):
+    sleep(2) # for now we just wait and that's enough
 
 def unread(oneshot=False):
     response = api.sync()
@@ -321,12 +325,12 @@ def unread(oneshot=False):
         print(sum, flush=True)
         if args.follow and not oneshot:
             client.add_listener(unread_callback)
-            client.listen_forever()
+            client.listen_forever(exception_handler=listen_handler)
     else:
         try:
             print(response['rooms']['join'][room_id]['unread_notifications']['notification_count'], flush=True)
             if args.follow and not oneshot:
-                # add a room listener thats calls unread(oneshot=True)
+                # add a room listener that's calls unread(oneshot=True)
                 room = client.rooms[room_id]
                 room.add_listener(unread_callback)
                 client.listen_forever()
