@@ -227,6 +227,8 @@ def maybe_notify(title, content,avatar_url):
     except:
         pass
 
+def listen_handler(e):
+    sleep(2) # for now we just wait and that's enough
 
 def listen_callback(event):
     if event["sender"] != client.user_id:
@@ -265,7 +267,7 @@ def print_rooms():
 def listen():
     print("started listening ...", flush=True)
     client.add_listener(listen_callback)
-    client.listen_forever()
+    client.listen_forever(exception_handler=listen_handler)
 
 def send():
     room = choose_room()
@@ -307,8 +309,6 @@ def unread_callback(dump1, dump2=False):
     sleep(1) # a brief delay needed when we send messages
     unread(oneshot=True)
 
-def listen_handler(e):
-    sleep(2) # for now we just wait and that's enough
 
 def unread(oneshot=False):
     response = api.sync()
