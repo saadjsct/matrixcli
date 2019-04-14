@@ -1,0 +1,3 @@
+[submodule "matrix-python-sdk"]
+	path = matrix-python-sdk
+	url = https://github.com/saadnpq/matrix-python-sdk
