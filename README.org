@@ -296,10 +296,12 @@ to display unread messages. here is a simple example for polybar
 #+begin_src yaml
 [module/matrix]
 type = custom/script
-exec = matrixcli unread 
+exec = matrixcli unread -f 
+tail = true
+interval = 30
 format = <label>
 label = M[%output%]
-interval = 300 
+format-underline = #268bd2
 #+end_src 
 
 [[file:screenshots/polybar.jpg]]
