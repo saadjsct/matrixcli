@@ -18,7 +18,7 @@ setup(
         'Operating System :: POSIX :: Linux',
     ],
     keywords='chat matrix command line',
-    install_requires=['matrix_client',],
     data_files=[('/etc/matrixcli', ['config.py']),('/lib/systemd/user', ['matrixcli.service'])],
+    packages=find_packages(),
     scripts=['matrixcli']
 )
