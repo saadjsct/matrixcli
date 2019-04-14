@@ -13,7 +13,7 @@ if you wonder how this is useful please see [[* applications][applications]]
 you can install matrixcli using setup.py in root project directory. 
 This will also install all needed dependencies.
 #+BEGIN_SRC shell
-git clone https://git.saadnpq.com/saad/matrixcli
+git clone --recurse-submodules https://git.saadnpq.com/saad/matrixcli
 cd ./matrixcli 
 sudo ./setup.py install 
 #+END_SRC
@@ -31,10 +31,10 @@ can install the [[*dependencies][dependencies]] manually and just run ./matrixcl
 * dependencies 
 the only required dependency is the matrix-python-sdk, which is 
 installed automatically if you used the install method mentioned above.
-to install it manually run the following 
-#+begin_src shell
-sudo pip3 install matrix_client
-#+end_src
+this package is a fork maintained by me and not the upstream package due 
+to a problems in handling lost connection, I've submitted a pull request but 
+its not likely to be merged any time soon as the project is now very lightly 
+maintained.
 
 * configuration file
 the account configuration is done through the config.py
