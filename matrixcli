@@ -263,6 +263,7 @@ def print_rooms():
     return enum_rooms
 
 def listen():
+    print("started listening ...", flush=True)
     client.add_listener(listen_callback)
     client.listen_forever()
 
@@ -339,6 +340,8 @@ args = get_parser().parse_args()
 config, config_path = load_config()
 server, username, password = config_vs_options()
 
+print("logging in ....", flush=True)
+
 while True:
     # loop until no errors
     try:
@@ -349,6 +352,8 @@ while True:
     except matrix_client.errors.MatrixHttpLibError:
         print('error connecting. retrying after 1 second...', file=sys.stderr)
         sleep(1)
+
+print("logged in ....", flush=True)
 
 subcommand = { "listen": listen,
                "rooms": print_rooms,
