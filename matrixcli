@@ -113,7 +113,7 @@ def load_config():
             config.ignore_rooms = []
 
     except FileNotFoundError:
-        print("WARNING: config file does not exist")
+        print("WARNING: config file does not exist", flush=True)
     return config, config_path
 
 def config_vs_options():
@@ -232,13 +232,13 @@ def listen_callback(event):
     if event["sender"] != client.user_id:
         room_name, sender_name, avatar_url, content = str_event(event)
         maybe_notify(sender_name, content, avatar_url)
-    print((sender_name if room_name == "" else sender_name + " in " + room_name) + ":" , content)
+    print((sender_name if room_name == "" else sender_name + " in " + room_name) + ":" , content, flush=True)
 
 def on_message(room, event):
     if event["sender"] != client.user_id:
         room_name, sender_name, avatar_url, content = str_event(event)
         maybe_notify(sender_name, content, avatar_url)
-    print(sender_name + ":", content)
+    print(sender_name + ":", content, flush=True)
 
 def choose_room():
     """ prompts the user to choose a room from his joined rooms and returns the room_id """
@@ -251,15 +251,15 @@ def choose_room():
             print("this room does not exist or you are not joined\n", file=sys.stderr)
     enum_rooms = print_rooms()
     choice = int(input("enter room number : "))
-    print("")
+    print("", flush=True)
     room = list(enum_rooms)[choice][1][1]
     return room
 
 def print_rooms():
     enum_rooms = list(enumerate(client.rooms.items()))
     for i, (k, v) in enum_rooms:
-        print(i, v.display_name , k, sep=" : ")
-    print("")
+        print(i, v.display_name , k, sep=" : ", flush=True)
+    print("", flush=True)
     return enum_rooms
 
 def listen():
@@ -292,7 +292,7 @@ def tail():
         room.backfill_previous_messages(limit=args.messages_number-10)
     for event in room.events[-1*args.messages_number:]:
         room_name, sender_name, avatar_url, content = str_event(event)
-        print(sender_name + ":", content)
+        print(sender_name + ":", content, flush=True)
     if args.follow :
         room.add_listener(on_message)
         client.start_listener_thread()
@@ -317,20 +317,20 @@ def unread(oneshot=False):
                     sum += response['rooms']['join'][room_id]['unread_notifications']['notification_count']
                 except KeyError:
                     sum += 0
-        print(sum)
+        print(sum, flush=True)
         if args.follow and not oneshot:
             client.add_listener(unread_callback)
             client.listen_forever()
     else:
         try:
-            print(response['rooms']['join'][room_id]['unread_notifications']['notification_count'])
+            print(response['rooms']['join'][room_id]['unread_notifications']['notification_count'], flush=True)
             if args.follow and not oneshot:
                 # add a room listener thats calls unread(oneshot=True)
                 room = client.rooms[room_id]
                 room.add_listener(unread_callback)
                 client.listen_forever()
         except KeyError:
-            print("problems fetching unread notifications, maybe wrong room id?")
+            print("problems fetching unread notifications, maybe wrong room id?", file=sys.stderr)
             exit(1)
 
 #--------------------------------------------
