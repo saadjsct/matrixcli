@@ -197,7 +197,7 @@ def str_event(event):
         content -- content representation
     '''
     room = client.rooms[event['room_id']]
-    if len(room.get_joined_members()) > 2 and show_room:
+    if len(room.get_joined_members()) > 2:
         room_name = "(" + room.display_name + ") "
     else:
         room_name = ""
