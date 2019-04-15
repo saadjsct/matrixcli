@@ -306,6 +306,8 @@ format-underline = #268bd2
 
 [[file:screenshots/polybar.jpg]]
 
+M[6] here indicates 6 unread messages
+
 ** sendmail for matrix 
 for example i have this cron job that sends every day a random song
 from my music directory to a specific room.
