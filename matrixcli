@@ -233,8 +233,9 @@ def listen_handler(e):
 def listen_callback(event):
     if event["sender"] != client.user_id:
         room_name, sender_name, avatar_url, content = str_event(event)
-        maybe_notify(sender_name, content, avatar_url)
-    print((sender_name if room_name == "" else sender_name + " in " + room_name) + ":" , content, flush=True)
+        title = (sender_name if room_name == "" else sender_name + " in " + room_name) + ":"
+        maybe_notify(title, content, avatar_url)
+    print(title, content, flush=True)
 
 def on_message(room, event):
     if event["sender"] != client.user_id:
