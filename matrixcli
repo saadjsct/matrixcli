@@ -241,7 +241,7 @@ def on_message(room, event):
     if event["sender"] != client.user_id:
         room_name, sender_name, avatar_url, content = str_event(event)
         maybe_notify(sender_name, content, avatar_url)
-    print(sender_name + ":", content, flush=True)
+        print(sender_name + ":", content, flush=True)
 
 def choose_room():
     """ prompts the user to choose a room from his joined rooms and returns the room_id """
@@ -299,8 +299,7 @@ def tail():
         print(sender_name + ":", content, flush=True)
     if args.follow :
         room.add_listener(on_message)
-        client.start_listener_thread()
-        client.listen_forever()
+        client.start_listener_thread(exception_handler=listen_handler)
 
         while True:
             msg = input()
