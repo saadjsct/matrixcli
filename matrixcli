@@ -202,8 +202,13 @@ def str_event(event):
     else:
         room_name = ""
 
-    sender_name = client.get_user(event["sender"]).get_display_name()
-    avatar_url = client.get_user(event["sender"]).get_avatar_url()
+    while True:
+        try:
+            sender_name = client.get_user(event["sender"]).get_display_name()
+            avatar_url = client.get_user(event["sender"]).get_avatar_url()
+            break
+        except:
+            listen_handler()
 
     if event['type'] == "m.room.message":
         if event['content']['msgtype'] == "m.text":
