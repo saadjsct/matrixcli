@@ -330,7 +330,10 @@ def unread(oneshot=False):
         print(sum, flush=True)
         if args.follow and not oneshot:
             client.add_listener(unread_callback)
-            client.listen_forever(exception_handler=listen_handler)
+            client.start_listener_thread(exception_handler=listen_handler)
+            while True:
+                sleep(2)
+                unread_callback(None)
     else:
         try:
             print(response['rooms']['join'][room_id]['unread_notifications']['notification_count'], flush=True)
