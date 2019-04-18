@@ -169,11 +169,15 @@ matrixcli rooms
 #+end_src
 outputs the following (for my account).
 #+begin_example 
-0 : moatazomar : !LsBUkYVYJignwCpACn:saadnpq.com
+logging in ....
+logged in ....
+0 : momenamr : !ocOmULdomkoJWYzXts:matrix.org
 1 : mahmoudhafez : !fCXcmULzIohNQomvXD:saadnpq.com
-2 : momenamr : !ocOmULdomkoJWYzXts:matrix.org
+2 : Emacs Matrix Client : !ZrZoyXEyFrzcBZKNis:matrix.org
 3 : elm3alem zaki : !OaBjEnLTTVqGpqrPES:matrix.org
-4 : true sharing : !OSPeUVrwMKbIrLQuBX:matrix.org
+4 : matrix-python-sdk : !YHhmBTmGBHGQOlGpaZ:matrix.org
+5 : Emacs : !PWxnIIDhCBAbNItsSN:matrix.org
+6 : moatazomar : !LsBUkYVYJignwCpACn:saadnpq.com
 #+end_example
 
 if you didn't specify the room-id or room-alias through the command line, the program will prompt you 
