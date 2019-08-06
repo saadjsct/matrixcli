@@ -224,8 +224,11 @@ def str_event(event):
 def maybe_notify(title, content,avatar_url):
     """if the system is running headless or any problem happened with system notifications don't complain """
     try:
-        bullshit, avatar_file = tempfile.mkstemp()
-        urllib.request.urlretrieve(avatar_url, avatar_file)
+        if avatar_url:
+            bullshit, avatar_file = tempfile.mkstemp()
+            urllib.request.urlretrieve(avatar_url, avatar_file)
+        else:
+            avatar_file = None
         Notify.init("matrix")
         Notify.Notification.new(title, content, avatar_file).show()
         Notify.uninit()
