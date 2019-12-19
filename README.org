@@ -13,7 +13,7 @@ if you wonder how this is useful please see [[* applications][applications]]
 you can install matrixcli using setup.py in root project directory. 
 This will also install all needed dependencies.
 #+BEGIN_SRC shell
-git clone --recurse-submodules https://git.saadnpq.com/saad/matrixcli
+git clone --recurse-submodules https://github.com/saadnpq/matrixcli.git
 cd ./matrixcli 
 sudo ./setup.py install 
 #+END_SRC
