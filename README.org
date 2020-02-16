@@ -7,7 +7,7 @@
 #+hugo_tags: projects
 
 matrixcli is a simple [[https://matrix.org/blog/home/][matrix]] client based on the [[https://github.com/matrix-org/matrix-python-sdk][matrix-python-sdk]].
-if you wonder how this is useful please see [[* applications][applications]]
+if you wonder how this is useful please see [[https://github.com/saadnpq/matrixcli#applications][applications]]
 
 * installation
 you can install matrixcli using setup.py in root project directory. 
