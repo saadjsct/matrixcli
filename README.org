@@ -15,7 +15,7 @@ This will also install all needed dependencies.
 #+BEGIN_SRC shell
 git clone --recurse-submodules https://github.com/saadnpq/matrixcli.git
 cd ./matrixcli 
-sudo ./setup.py install 
+sudo ./install.sh
 #+END_SRC
 this will put the matrixcli script in your path, install a 
 template config.py file in /etc/matrixcli and systemd unit file in /lib/systemd/user
