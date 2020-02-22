@@ -12,7 +12,7 @@
 
 # accounts=[
 
-#         { "server":"https://example.com",
+#         { "server":"https://example.com", # don't include the trailing slash
 #           "username":"account1",
 #           "passeval":account1_password_eval },
 
