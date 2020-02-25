@@ -1,4 +1,4 @@
-#+TITLE: matrixcli a minimal command line matrix client
+#+TITLE: matrixcli: a minimal command line matrix client
 #+AUTHOR: saadnpq
 #+date: 2019-03-30 
 #+HUGO_BASE_DIR: ~/blog/ 
@@ -20,21 +20,12 @@ sudo ./install.sh
 this will put the matrixcli script in your path, install a 
 template config.py file in /etc/matrixcli and systemd unit file in /lib/systemd/user
 
+for ubuntu users you have to install python3-setuptools first before running the above commands
+
 to enable the systemd service you can run the following.
 #+begin_src shell
 systemctl --user enable --now matrixcli
 #+end_src
-
-if you want to test the program without installing it you 
-can install the [[*dependencies][dependencies]] manually and just run ./matrixcli in the cloned repository
-
-* dependencies 
-the only required dependency is the matrix-python-sdk, which is 
-installed automatically if you used the install method mentioned above.
-this package is a fork maintained by me and not the upstream package due 
-to a problems in handling lost connection, I've submitted a pull request but 
-its not likely to be merged any time soon as the project is now very lightly 
-maintained.
 
 * configuration file
 the account configuration is done through the config.py
@@ -120,8 +111,51 @@ if you have two or more accounts with the same username but with different serve
 you can specify the --server option to norrow down the possible accounts to the
 account you want.
 
-* usage
-for a list of the sub commands and options run 
+* applications 
+below are the ways i personally use matrixcli, 
+
+** desktop notifications
+the first motive to make this program was that i didn't want to keep 
+riot webpage open or to run an electron app just for notifications.
+
+you can enable the systemd service, to get notifications for events as they come.
+#+begin_src shell 
+systemctl --user enable --now matrixcli
+#+end_src
+
+[[file:screenshots/notifications.png]]
+
+** status bars
+using =matrixcli unread= you write a module for any status bar
+to display unread messages. here is a simple example for polybar
+
+#+begin_src yaml
+[module/matrix]
+type = custom/script
+exec = matrixcli unread -f 2> /dev/null
+tail = true
+interval = 30
+format = <label>
+label = M[%output%]
+format-underline = #268bd2
+#+end_src 
+
+[[file:screenshots/polybar.jpg]]
+
+M[6] here indicates 6 unread messages
+
+** sendmail for matrix 
+for example i have this cron job that sends every day a random song
+from my music directory to a specific room.
+
+#+begin_src shell
+0 0 * * * /usr/local/bin/matrixcli send -r '!OSPeUVrwMKbIrLQuBX:matrix.org' $(tree /home/pi/musiqa -fi | grep ".*.mp3" | shuf | sed 1q)
+#+end_src
+
+and i use it in many scripts on remote servers to notify me about a script output or just when something goes wrong.
+
+* how to use
+for a list of the subcommands and options run 
 #+begin_src shell
 matrixcli --help 
 #+end_src
@@ -277,54 +311,3 @@ optional arguments:
 outputs unread messages for room_id or all rooms (except those in ignore_rooms)
 if no room_id or room_alias specified
 
-* applications 
-below are the ways i personally use matrixcli, 
-if you found a different use case which you think will be beneficial for others too,
-please edit this readme, make a pull request and i will accept it.
-
-** desktop notifications
-the first motive to make this program was that i didn't want to keep 
-riot webpage open or to run an electron app just for notifications.
-
-you can enable the systemd service, to get notifications for events as they come.
-#+begin_src shell 
-systemctl --user enable --now matrixcli
-#+end_src
-
-[[file:screenshots/notifications.png]]
-
-** status bars
-using =matrixcli unread= you write a module for any status bar
-to display unread messages. here is a simple example for polybar
-
-#+begin_src yaml
-[module/matrix]
-type = custom/script
-exec = matrixcli unread -f 2> /dev/null
-tail = true
-interval = 30
-format = <label>
-label = M[%output%]
-format-underline = #268bd2
-#+end_src 
-
-[[file:screenshots/polybar.jpg]]
-
-M[6] here indicates 6 unread messages
-
-** sendmail for matrix 
-for example i have this cron job that sends every day a random song
-from my music directory to a specific room.
-
-#+begin_src shell
-0 0 * * * /usr/local/bin/matrixcli send -r '!OSPeUVrwMKbIrLQuBX:matrix.org' $(tree /home/pi/musiqa -fi | grep ".*.mp3" | shuf | sed 1q)
-#+end_src
-
-and i use it in many scripts on remote servers to notify me about a script output or just when something goes wrong.
-
-* Source code
-The source code is distributed under GNU General Public License v3. See LICENSE.
-
-# Local Variables:
-# eval: (org-hugo-auto-export-mode)
-# End:
