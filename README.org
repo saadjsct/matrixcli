@@ -21,6 +21,9 @@ this will put the matrixcli script in your path, install a
 template config.py file in /etc/matrixcli and systemd unit file in /lib/systemd/user
 
 for ubuntu users you have to install python3-setuptools first before running the above commands
+#+begin_src shell
+sudo apt instal python3-setuptools
+#+end_src
 
 to enable the systemd service you can run the following.
 #+begin_src shell
