@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-python ./setup.py install || exit 1
+python3 ./setup.py install || exit 1
 cd ./matrix-python-sdk
-python ./setup.py install
+python3 ./setup.py install
 cd ..
