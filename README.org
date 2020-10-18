@@ -30,6 +30,11 @@ to enable the systemd service you can run the following.
 systemctl --user enable --now matrixcli
 #+end_src
 
+to uninstall you can simply run 
+#+begin_src shell
+pip uninstall matrixcli
+#+end_src
+
 * configuration file
 the account configuration is done through the config.py
 file in either one of the following locations sorted by precedence
