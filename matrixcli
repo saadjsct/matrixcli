@@ -37,6 +37,16 @@ def get_parser():
     parser.add_argument("-c", "--config", dest="config",
                         help="custom configuration file")
 
+    parser_register = subparsers.add_parser('register', help="Register a user")
+    parser_register.add_argument("-U", "--username", dest="username",
+                                 help="Username for user")
+    parser_register.add_argument("-P", "--password", dest="password",
+                                 help="Password for user")
+
+    parser_send = subparsers.add_parser('create', help='Create a room')
+    parser_send.add_argument("-n", "--name", dest="create_room",
+                             help="Create a new room with the provided name")
+
     parser_send = subparsers.add_parser('send', help='send something to a room')
     group = parser_send.add_mutually_exclusive_group()
     group.add_argument("-r", "--room-id", dest="room_id",
@@ -55,6 +65,9 @@ def get_parser():
 
     parser_rooms = subparsers.add_parser('rooms',
                                          help='get all joined rooms')
+    parser_join = subparsers.add_parser("join",
+                                        help="Join a room")
+    parser_join.add_argument("-a", "--room-alias", dest="room_alias", help="Specify the room by alias")
 
     parser_unread = subparsers.add_parser('unread',
                                          help='get unread notifications')
@@ -155,8 +168,8 @@ configuration file by trying to figure out what the user probably mean
                     password = config.accounts[indexes[0]]["passeval"]()
                 else:
                     for index in indexes:
-                        if config.accounts[index]["server"] == args_server:
-                            server = args_server
+                        if config.accounts[index]["server"] == args.server:
+                            server = args.server
                             password = config.accounts[index]["passeval"]()
                             break
 
@@ -174,7 +187,7 @@ configuration file by trying to figure out what the user probably mean
         # arguments to be not None
 
         if all([args.server, args.password, args.username]):
-            return args_server, args_username, args_password
+            return args.server, args.username, args.password
         else :
             print("config file with accounts list does not exist, you have to specify the --server, --username and --password \n" +
                   "error raised: {0}".format(err), file=sys.stderr)
@@ -267,11 +280,19 @@ def choose_room():
     return room
 
 def print_rooms():
+    print("{} rooms:".format(len(client.rooms)), flush=True)
     enum_rooms = list(enumerate(client.rooms.items()))
     for i, (k, v) in enum_rooms:
         print(i, v.display_name , k, sep=" : ", flush=True)
     print("", flush=True)
     return enum_rooms
+
+def join_room():
+    response = client.join_room('#' + args.room_alias.strip('#'))
+
+def create_room():
+    response = client.create_room(args.create_room)
+    print(response.status_code)
 
 def listen():
     print("started listening ...", flush=True)
@@ -313,6 +334,11 @@ def tail():
             msg = input()
             room.send_text(msg)
 
+def register():
+    response = client.register(username=args.register.username,
+                               password=args.register.password)
+    print(response)
+
 def unread_callback(dump1, dump2=False):
     sleep(1) # a brief delay needed when we send messages
     unread(oneshot=True)
@@ -352,6 +378,7 @@ def unread(oneshot=False):
 #--------------------------------------------
 
 args = get_parser().parse_args()
+
 config, config_path = load_config()
 server, username, password = config_vs_options()
 
@@ -362,7 +389,7 @@ while True:
     try:
         client = MatrixClient(server)
         token = client.login(username,password)
-        api = MatrixHttpApi(server, token)
+        api = MatrixHttpApi(server, token, connection_timeout=120)
         break
     except matrix_client.errors.MatrixHttpLibError:
         print('error connecting. retrying after 1 second...', file=sys.stderr)
@@ -375,6 +402,9 @@ subcommand = { "listen": listen,
                "send": send,
                "tail": tail,
                "unread": unread,
+               "create": create_room,
+               "register": register,
+               "join": join_room,
                None: print_rooms}
 
 subcommand[args.subcommand]()
