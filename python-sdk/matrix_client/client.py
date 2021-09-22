@@ -585,19 +585,22 @@ class MatrixClient(object):
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
         self.sync_token = response["next_batch"]
 
-        for presence_update in response['presence']['events']:
-            for callback in self.presence_listeners.values():
-                callback(presence_update)
+        if 'presence' in response :
+            for presence_update in response['presence']['events']:
+                for callback in self.presence_listeners.values():
+                    callback(presence_update)
 
-        for room_id, invite_room in response['rooms']['invite'].items():
-            for listener in self.invite_listeners:
-                listener(room_id, invite_room['invite_state'])
+        if 'invite' in response['rooms'] :
+            for room_id, invite_room in response['rooms']['invite'].items():
+                for listener in self.invite_listeners:
+                    listener(room_id, invite_room['invite_state'])
 
-        for room_id, left_room in response['rooms']['leave'].items():
-            for listener in self.left_listeners:
-                listener(room_id, left_room)
-            if room_id in self.rooms:
-                del self.rooms[room_id]
+        if 'leave' in response['rooms'] :
+            for room_id, left_room in response['rooms']['leave'].items():
+                for listener in self.left_listeners:
+                    listener(room_id, left_room)
+                if room_id in self.rooms:
+                    del self.rooms[room_id]
 
         if self._encryption and 'device_one_time_keys_count' in response:
             self.olm_device.update_one_time_key_counts(
